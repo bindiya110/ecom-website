@@ -15,6 +15,11 @@ type Product = {
   image: string;
 };
 
+type CartItem = {
+  productId: number;
+  quantity: number;
+};
+
 const products: Product[] = [
   {
     id: 1,
@@ -74,7 +79,13 @@ export default function Home() {
   const [activeFilter, setActiveFilter] = useState<
     "All" | "Men" | "Women" | "New" | "Sale"
   >("All");
+  const [cart, setCart] = useState<CartItem[]>([]);
   const productsRef = useRef<HTMLElement | null>(null);
+
+  const cartCount = useMemo(
+    () => cart.reduce((sum, item) => sum + item.quantity, 0),
+    [cart],
+  );
 
   const filteredProducts = useMemo(() => {
     switch (activeFilter) {
@@ -98,6 +109,20 @@ export default function Home() {
     setTimeout(() => {
       productsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 0);
+  };
+
+  const addToCart = (productId: number) => {
+    setCart((current) => {
+      const existing = current.find((item) => item.productId === productId);
+      if (!existing) {
+        return [...current, { productId, quantity: 1 }];
+      }
+      return current.map((item) =>
+        item.productId === productId
+          ? { ...item, quantity: item.quantity + 1 }
+          : item,
+      );
+    });
   };
 
   return (
@@ -173,7 +198,7 @@ export default function Home() {
           <button className="flex items-center gap-2 rounded-full border border-white/15 px-3 py-1.5 text-xs font-medium text-slate-100 shadow-sm backdrop-blur-sm transition hover:border-white/40 hover:bg-white/5 sm:px-4 sm:text-sm">
             <span>Cart</span>
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-400 text-[11px] font-semibold text-slate-950">
-              0
+              {cartCount}
             </span>
           </button>
         </header>
@@ -391,7 +416,11 @@ export default function Home() {
                         </p>
                       )}
                     </div>
-                    <button className="inline-flex items-center justify-center rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-950 shadow-sm transition group-hover:bg-emerald-300">
+                    <button
+                      type="button"
+                      onClick={() => addToCart(product.id)}
+                      className="inline-flex items-center justify-center rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-950 shadow-sm transition group-hover:bg-emerald-300"
+                    >
                       Add to cart
                     </button>
                   </div>
